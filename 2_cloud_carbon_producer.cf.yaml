@@ -1,0 +1,118 @@
+AWSTemplateFormatVersion: 2010-09-09
+Parameters:
+  Namespace:
+    Type: String
+    Description: "Prefix used in resource naming e.g. myorg-dev or myorg-prod"
+
+  CollectorAccountId:
+    Type: String
+    Description: "The account ID of the collector account"
+
+  DestinationBucketArn:
+    Type: String
+    Description: "The arn of the bucket to replicate CUR data to"
+
+Resources:
+  CloudCarbonCurReplicationPolicy:
+    Type: AWS::IAM::ManagedPolicy
+    Properties:
+      Description: Policy to allow replication from S3 bucket
+      ManagedPolicyName: !Sub "${Namespace}-s3-replication-policy"
+      PolicyDocument:
+        Id: CloudCarbonReplicationPolicy
+        Version: 2012-10-17
+        Statement:
+          - Effect: "Allow"
+            Action:
+              - "s3:GetReplicationConfiguration"
+              - "s3:ListBucket"
+            Resource:
+              - !GetAtt CurSourceBucket.Arn
+          - Effect: "Allow"
+            Action:              
+              - "s3:GetObjectVersionForReplication"
+              - "s3:GetObjectVersionAcl"
+              - "s3:GetObjectVersionTagging"
+            Resource:
+              - !Sub "${CurSourceBucket.Arn}/*"
+          - Effect: "Allow"
+            Action:
+              - "s3:ReplicateObject"
+              - "s3:ReplicateDelete"
+              - "s3:ReplicateTags"
+              - "s3:ObjectOwnerOverrideToBucketOwner"
+            Resource:
+              - !Sub "${DestinationBucketArn}/*"
+      Roles:
+        - !Ref CloudCarbonCurReplicationRole
+
+  CloudCarbonCurReplicationRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub "${Namespace}-replication-role"
+      Description: Role assumed for S3 replication
+      AssumeRolePolicyDocument:
+        Statement:
+          - Effect: "Allow"
+            Action: "sts:AssumeRole"
+            Principal:
+              Service: "s3.amazonaws.com"
+      
+  CurSourceBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub "${Namespace}-${AWS::Region}"
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      VersioningConfiguration:
+        Status: Enabled
+      ReplicationConfiguration:
+        Role: !GetAtt CloudCarbonCurReplicationRole.Arn
+        Rules:
+          - Destination:
+              Bucket: !Ref DestinationBucketArn
+              StorageClass: STANDARD
+              AccessControlTranslation:
+                Owner: Destination
+              Account: !Ref CollectorAccountId
+            Status: Enabled
+
+  CloudCarbonCurBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref CurSourceBucket
+      PolicyDocument:
+        Id: CloudCarbonCurPolicy
+        Version: 2012-10-17
+        Statement:
+          - Sid: GetBucket
+            Effect: Allow
+            Principal:
+              Service: "billingreports.amazonaws.com"
+            Action:
+              - "s3:GetBucketAcl"
+              - "s3:GetBucketPolicy"
+            Resource: !GetAtt CurSourceBucket.Arn
+          - Sid: PutObjects
+            Effect: Allow
+            Principal:
+              Service: "billingreports.amazonaws.com"
+            Action:
+              - "s3:PutObject"
+            Resource: !Sub "${CurSourceBucket.Arn}/*"
+
+Outputs:
+  CloudCarbonFootprintReplicationRoleArn:
+    Description: "The role to use in the destination bucket policy"
+    Value: !GetAtt CloudCarbonCurReplicationRole.Arn
+    Export:
+      Name: "ReplicationRoleArn"
+
+  CloudCarbonBucketName:
+    Description: "The bucket name to use when setting up the CUR"
+    Value: !Ref CurSourceBucket
+    Export:
+      Name: "CostAndUsageBucketName"

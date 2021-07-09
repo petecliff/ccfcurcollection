@@ -1,0 +1,106 @@
+AWSTemplateFormatVersion: 2010-09-09
+
+Parameters:
+  Namespace:
+    Type: String
+    Description: "Prefix used in resource naming e.g. myorg-dev or myorg-prod"
+
+  BucketStackName:
+    Type: String
+    Description: "The name of the stack that created the buckets"
+
+  ReplicationSourceRoles:
+    Type: List<String>
+    Description: "Comma-separated list of roles that can replicate CUR data into the collection bucket"
+
+  AthenaUserOrRoleArn:
+    Type: String
+    Description: "The ARN of the user or role that will be used by CCF to make calls to Athena"
+
+Resources:
+  # From https://github.com/cloud-carbon-footprint/cloud-carbon-footprint/blob/trunk/cloudformation/ccf-athena.yaml
+  CCFAthenaRole:
+    Type: "AWS::IAM::Role"
+    Properties:
+      Description: "This role allows Cloud Carbon Footprint application to read Cost and Usage Reports via AWS Athena"
+      RoleName: !Sub "${Namespace}-ccf-athena-role"
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              AWS: !Ref AthenaUserOrRoleArn
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: athena
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action:
+                  - athena:StartQueryExecution
+                  - athena:GetQueryExecution
+                  - athena:GetQueryResults
+                  - athena:GetWorkGroup
+                Resource: '*'
+        - PolicyName: glue
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action:
+                  - glue:GetDatabase
+                  - glue:GetTable
+                  - glue:GetPartitions
+                Resource: '*'
+        - PolicyName: s3
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action:
+                  - s3:GetBucketLocation
+                  - s3:GetObject
+                  - s3:ListBucket
+                  - s3:ListBucketMultipartUploads
+                  - s3:ListMultipartUploadParts
+                  - s3:AbortMultipartUpload
+                  - s3:CreateBucket
+                  - s3:PutObject
+                Resource:
+                  - !ImportValue 
+                      "Fn::Sub": "${BucketStackName}-CollectorBucketArn"
+                  - !ImportValue 
+                      "Fn::Sub": "${BucketStackName}-CollectorBucketArn/*"
+
+  CCFCollectorBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !ImportValue "Fn::Sub": "${BucketStackName}-CollectorBucketName"
+      PolicyDocument:
+        Id: CloudCarbonCurPolicy
+        Version: 2012-10-17
+        Statement:
+          - Sid: PermissionsOnObjects
+            Effect: Allow
+            Principal:
+              AWS: !Ref ReplicationSourceRoles
+            Action:
+              - "s3:ReplicateDelete"
+              - "s3:ReplicateObject"
+              - "s3:ObjectOwnerOverrideToBucketOwner"
+            Resource:
+              - !ImportValue 
+                "Fn::Sub": "${BucketStackName}-CollectorBucketArn/*"
+          - Sid: PermissionsOnBucket
+            Effect: Allow
+            Principal:
+              AWS: !Ref ReplicationSourceRoles
+            Action:
+              - "s3:List*"
+              - "s3:GetBucketVersioning"
+              - "s3:PutBucketVersioning"
+            Resource:
+              - !ImportValue 
+                "Fn::Sub": "${BucketStackName}-CollectorBucketArn"
+

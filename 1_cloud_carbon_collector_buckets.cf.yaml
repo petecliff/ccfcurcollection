@@ -1,0 +1,54 @@
+AWSTemplateFormatVersion: 2010-09-09
+
+Parameters:
+  Namespace:
+    Type: String
+    Description: "Prefix used in resource naming e.g. myorg-dev or myorg-prod"
+
+Resources:
+  CCFCollectorBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub "${Namespace}-ccfcur-${AWS::Region}"
+      VersioningConfiguration:
+        Status: Enabled
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+
+  ResultsBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub "${Namespace}-results-${AWS::Region}"
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true   
+
+Outputs:
+  CCFCollectorBucketName:
+    Description: "The collection bucket name"
+    Value: CCFCollectorBucket
+    Export:
+      Name: !Sub "${AWS::StackName}-CollectorBucketName"
+
+  CCFCollectorBucketArn:
+    Description: "The collection bucket arn"
+    Value: !GetAtt CCFCollectorBucket.Arn
+    Export:
+      Name: !Sub "${AWS::StackName}-CollectorBucketArn"
+
+  ResultsBucketName:
+    Description: "The athena results bucket name"
+    Value: ResultsBucket
+    Export:
+      Name: !Sub "${AWS::StackName}-ResultsBucketName"
+
+  ResultsBucketArn:
+    Description: "The athena results bucket arn"
+    Value: !GetAtt ResultsBucket.Arn
+    Export:
+      Name: !Sub "${AWS::StackName}-ResultsBucketArn"        
