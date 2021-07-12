@@ -18,7 +18,7 @@ Parameters:
     Description: "The ARN of the user or role that will be used by CCF to make calls to Athena"
 
 Resources:
-  # From https://github.com/cloud-carbon-footprint/cloud-carbon-footprint/blob/trunk/cloudformation/ccf-athena.yaml
+  # The Athena role tweaked from https://github.com/cloud-carbon-footprint/cloud-carbon-footprint/blob/trunk/cloudformation/ccf-athena.yaml
   CCFAthenaRole:
     Type: "AWS::IAM::Role"
     Properties:
@@ -70,13 +70,17 @@ Resources:
                 Resource:
                   - !ImportValue 
                       "Fn::Sub": "${BucketStackName}-CollectorBucketArn"
-                  - !ImportValue 
-                      "Fn::Sub": "${BucketStackName}-CollectorBucketArn/*"
+                  - !Join
+                    - "/"
+                    - - "Fn::ImportValue": 
+                          "Fn::Sub": "${BucketStackName}-CollectorBucketArn"
+                      - "*"
 
   CCFCollectorBucketPolicy:
     Type: AWS::S3::BucketPolicy
     Properties:
-      Bucket: !ImportValue "Fn::Sub": "${BucketStackName}-CollectorBucketName"
+      Bucket: !ImportValue 
+                "Fn::Sub": "${BucketStackName}-CollectorBucketName"
       PolicyDocument:
         Id: CloudCarbonCurPolicy
         Version: 2012-10-17
@@ -90,8 +94,12 @@ Resources:
               - "s3:ReplicateObject"
               - "s3:ObjectOwnerOverrideToBucketOwner"
             Resource:
-              - !ImportValue 
-                "Fn::Sub": "${BucketStackName}-CollectorBucketArn/*"
+              - !Join
+                - "/"
+                - - "Fn::ImportValue": 
+                      "Fn::Sub": "${BucketStackName}-CollectorBucketArn"
+                  - "*"
+                  
           - Sid: PermissionsOnBucket
             Effect: Allow
             Principal:

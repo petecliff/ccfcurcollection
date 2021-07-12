@@ -31,7 +31,7 @@ Resources:
 Outputs:
   CCFCollectorBucketName:
     Description: "The collection bucket name"
-    Value: CCFCollectorBucket
+    Value: !Ref CCFCollectorBucket
     Export:
       Name: !Sub "${AWS::StackName}-CollectorBucketName"
 
@@ -43,7 +43,7 @@ Outputs:
 
   ResultsBucketName:
     Description: "The athena results bucket name"
-    Value: ResultsBucket
+    Value: !Ref ResultsBucket
     Export:
       Name: !Sub "${AWS::StackName}-ResultsBucketName"
 
