@@ -2,9 +2,13 @@
 
 These templates are used to collect cost and usage report data from AWS accounts into a central logging account. The reason for this is to collate cost and usage for one or more accounts in order to run Cloud Carbon Footprint while maintaining as light a touch as possible on the monitored account. This avoids having to jump through access/governance hoops and is a near zero risk way to measure carbon usage for production accounts. If you can do it, it would of course be easier to log your AWS Organization management account level cost and usage (for all accounts in the org). That will probably be the way to go in the future, but for now I'm trying this on a couple of accounts, not the whole org.
 
-These notes assume experience of AWS and Cloud Carbon Footprint
+These notes assume experience of AWS and Cloud Carbon Footprint and mostly so I know what I did in 6 months time! :-)
 
 # Overview
+
+Looks a little like this:
+
+![Overview of Cloud Carbon Footprint Collector/Producer idea (diagram)](ccf_cur_multi_account.png)
 
 # Step 1 - Collector Account
 Deploy template 1_cloud_carbon_collector_buckets.cf.yaml
