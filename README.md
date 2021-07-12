@@ -11,7 +11,7 @@ Looks a little like this:
 ![Overview of Cloud Carbon Footprint Collector/Producer idea (diagram)](ccf_cur_multi_account.png)
 
 # Step 1 - Collector Account
-Deploy template 1_cloud_carbon_collector_buckets.cf.yaml
+Deploy template `1_cloud_carbon_collector_buckets.cf.yaml`
 
 The namespace parameter is used to prefix resources created so call it something like
 "peteccf" or "snccf". If you have trouble with bucket name collision you might need
@@ -28,7 +28,7 @@ used as a parameter on the producer accounts to configure where to replicate the
 # Step 2 - Producer Account(s)
 
 ## Create CUR bucket with replication
-Deploy template 2_cloud_carbon_producer.yaml to the accounts you want to track.
+Deploy template `2_cloud_carbon_producer.yaml` to the accounts you want to track.
 
 You'll need:
 
@@ -66,7 +66,7 @@ Hopefully you'll get the "Report created successfully" message.
 It can take up to 24 hours to start to see CUR data being delivered. While you wait move on to step 3.
 
 # Step 3 - Collector Account - Allow replication from producers
-Back in the collector account, deploy template 3_cloud_carbon_collector_iam.cf.yaml
+Back in the collector account, deploy template `3_cloud_carbon_collector_iam.cf.yaml`
 
 You'll need:
 
