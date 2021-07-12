@@ -72,7 +72,11 @@ You'll need:
 
 Namespace is used as before.
 
-CCF assumes a role to query CUR data. This template creates the role. Here you must provide an ARN for a user or this Athena role to query CUR data. To get this ARN, if you are running CCF as your own user account then go to IAM then users and select your user and copy the ARN displayed. (Or ask your admin if you can't see IAM). Alternately get the ARN of a role you can assume and use that. 
+I need to look into this a bit more, but I *think* CCF assumes a role to query CUR data. This template creates the role based on an example CCF provide.
+
+Here you must provide an ARN for a user or this Athena role to query CUR data. To get this ARN, if you are running CCF as your own user account then go to IAM then users and select your user and copy the ARN displayed. (Or ask your admin if you can't see IAM). Alternately get the ARN of a role you can assume and use that.
+
+When I get time I'll dig into that a bit more and see if user/group/policy can be used here.
 
 The ARNs for the replication roles need to specified as a comma-separated string:
 
